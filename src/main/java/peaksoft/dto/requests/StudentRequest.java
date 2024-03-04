@@ -15,6 +15,7 @@ public record StudentRequest(
         Student newStudent = new Student();
         newStudent.setFirstName(this.firstName);
         newStudent.setLastName(this.lastName);
+        newStudent.setEmail(this.email);
         newStudent.setPhoneNumber(this.phoneNumber);
         newStudent.setStudyFormat(StudyFormat.valueOf(this.studyFormat.toUpperCase()));
         return newStudent;

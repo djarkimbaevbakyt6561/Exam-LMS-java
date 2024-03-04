@@ -1,6 +1,5 @@
 package peaksoft.service.impls;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -10,9 +9,11 @@ import peaksoft.dto.responses.CountOfStudentsResponse;
 import peaksoft.dto.responses.InstructorResponse;
 import peaksoft.dto.responses.SimpleResponse;
 import peaksoft.entites.Company;
+import peaksoft.entites.Course;
 import peaksoft.entites.Instructor;
 import peaksoft.enums.Specialization;
 import peaksoft.repositories.CompanyRepository;
+import peaksoft.repositories.CourseRepository;
 import peaksoft.repositories.InstructorRepository;
 import peaksoft.service.InstructorService;
 
@@ -23,15 +24,20 @@ import java.util.NoSuchElementException;
 public class InstructorServiceImpl implements InstructorService {
     private final InstructorRepository instructorRepository;
     private final CompanyRepository companyRepository;
+    private final CourseRepository courseRepository;
 
     @Override
     public SimpleResponse save(InstructorRequest instructorRequest) {
-            try {
-                instructorRepository.save(instructorRequest.build());
-                return SimpleResponse.builder().httpStatus(HttpStatus.OK).message("Successfully saved!").build();
-            } catch (NoSuchElementException e) {
-                return SimpleResponse.builder().httpStatus(HttpStatus.OK).message(e.getMessage()).build();
+        try {
+            if (!instructorRequest.phoneNumber().contains("+996")) {
+                throw new RuntimeException("Phone number does not contain +996!");
             }
+            Instructor buildedInstructor = instructorRequest.build();
+            instructorRepository.save(buildedInstructor);
+            return SimpleResponse.builder().httpStatus(HttpStatus.OK).message("Successfully saved!").build();
+        } catch (RuntimeException e) {
+            return SimpleResponse.builder().httpStatus(HttpStatus.BAD_REQUEST).message(e.getMessage()).build();
+        }
     }
 
     @Override
@@ -86,6 +92,21 @@ public class InstructorServiceImpl implements InstructorService {
 
             instructor.getCompanies().add(company);
             company.getInstructors().add(instructor);
+            return SimpleResponse.builder().message("Successfully assigned!").httpStatus(HttpStatus.OK).build();
+        } catch (NoSuchElementException e) {
+            return SimpleResponse.builder().message("Group or Course with given id is not found!").httpStatus(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    @Override
+    @Transactional
+    public SimpleResponse assignInstructorToCourse(Long instructorId, Long courseId) {
+        try {
+            Instructor instructor = instructorRepository.findById(instructorId).orElseThrow(() -> new NoSuchElementException("Instructor with id " + instructorId + " is not found!"));
+            Course course = courseRepository.findById(courseId).orElseThrow(() -> new NoSuchElementException("Course with id " + courseId + " is not found!"));
+
+            instructor.setCourse(course);
+            course.getInstructors().add(instructor);
             return SimpleResponse.builder().message("Successfully assigned!").httpStatus(HttpStatus.OK).build();
         } catch (NoSuchElementException e) {
             return SimpleResponse.builder().message("Group or Course with given id is not found!").httpStatus(HttpStatus.NOT_FOUND).build();

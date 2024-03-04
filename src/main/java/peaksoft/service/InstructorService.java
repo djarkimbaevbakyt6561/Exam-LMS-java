@@ -15,6 +15,7 @@ public interface InstructorService {
     SimpleResponse deleteById(Long instructorId);
 
     SimpleResponse assignInstructorToCompany(Long instructorId, Long companyId);
+    SimpleResponse assignInstructorToCourse(Long instructorId, Long courseId);
 
     CountOfStudentsResponse getCountOfStudentsFromThatInstructorTeach(Long instructorId);
 

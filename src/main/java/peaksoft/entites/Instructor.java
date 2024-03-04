@@ -25,6 +25,10 @@ public class Instructor {
     private String phoneNumber;
     private Specialization specialization;
     @ManyToOne
+    @JoinTable(
+            name = "instructor_course",
+            joinColumns = @JoinColumn(name = "instructor_id"),
+            inverseJoinColumns = @JoinColumn(name = "course_id"))
     private Course course;
     @ManyToMany
     private List<Company> companies;

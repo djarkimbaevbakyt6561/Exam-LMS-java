@@ -31,7 +31,7 @@ public class LessonServiceImpl implements LessonService {
             lessonRepository.save(lesson);
             return SimpleResponse.builder().httpStatus(HttpStatus.OK).message("Successfully saved!").build();
         } catch (NoSuchElementException e) {
-            return SimpleResponse.builder().httpStatus(HttpStatus.OK).message(e.getMessage()).build();
+            return SimpleResponse.builder().httpStatus(HttpStatus.BAD_REQUEST).message(e.getMessage()).build();
         }
     }
 

@@ -27,10 +27,15 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public SimpleResponse save(StudentRequest studentRequest) {
         try {
-            studentRepository.save(studentRequest.build());
+            if (!studentRequest.phoneNumber().contains("+996")) {
+                throw new RuntimeException("Phone number does not contain +996!");
+            }
+            Student student = studentRequest.build();
+            student.setGroup(groupRepository.findById(studentRequest.groupId()).orElseThrow(() -> new NoSuchElementException("Group with id " + studentRequest.groupId() + " is not found")));
+            studentRepository.save(student);
             return SimpleResponse.builder().httpStatus(HttpStatus.OK).message("Successfully saved!").build();
         } catch (NoSuchElementException e) {
-            return SimpleResponse.builder().httpStatus(HttpStatus.OK).message(e.getMessage()).build();
+            return SimpleResponse.builder().httpStatus(HttpStatus.BAD_REQUEST).message(e.getMessage()).build();
         }
     }
 

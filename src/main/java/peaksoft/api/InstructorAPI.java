@@ -38,6 +38,10 @@ public class InstructorAPI {
     public SimpleResponse assignInstructorToCompany(@RequestParam("instructorId") Long instructorId, @RequestParam("companyId") Long companyId) {
         return instructorService.assignInstructorToCompany(instructorId, companyId);
     }
+    @PostMapping("/assign/course")
+    public SimpleResponse assignInstructorToCourse(@RequestParam("instructorId") Long instructorId, @RequestParam("courseId") Long courseId) {
+        return instructorService.assignInstructorToCourse(instructorId, courseId);
+    }
 
     @GetMapping("/{instructorId}/count/students")
     public CountOfStudentsResponse getCountOfStudentsFromThatInstructorTeach(@PathVariable Long instructorId){
