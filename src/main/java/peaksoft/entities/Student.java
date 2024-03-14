@@ -1,4 +1,4 @@
-package peaksoft.entites;
+package peaksoft.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -7,13 +7,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import peaksoft.enums.StudyFormat;
 
+
 @Entity
 @Table(name = "students")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class Student {
+public class Student   {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "students_gen")
     @SequenceGenerator(name = "students_gen", sequenceName = "students_seq", allocationSize = 1)
@@ -21,7 +22,9 @@ public class Student {
     private String firstName;
     private String lastName;
     private String phoneNumber;
-    private String email;
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE, CascadeType.MERGE})
+    private LoginDetails loginDetails;
+    @Enumerated(EnumType.STRING)
     private StudyFormat studyFormat;
     @ManyToOne
     private Group group;

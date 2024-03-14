@@ -8,8 +8,9 @@ import peaksoft.dto.requests.TaskRequest;
 import peaksoft.dto.requests.UpdateTaskRequest;
 import peaksoft.dto.responses.SimpleResponse;
 import peaksoft.dto.responses.TaskResponse;
-import peaksoft.entites.Task;
-import peaksoft.entites.Lesson;
+import peaksoft.dto.responses.unions.UnionTaskResponse;
+import peaksoft.entities.Task;
+import peaksoft.entities.Lesson;
 import peaksoft.repositories.LessonRepository;
 import peaksoft.repositories.TaskRepository;
 import peaksoft.service.TaskService;
@@ -39,17 +40,29 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public TaskResponse findById(Long taskId) {
+    public UnionTaskResponse findById(Long taskId) {
         try {
             Task task = taskRepository.findById(taskId).orElseThrow(NoSuchElementException::new);
-            return TaskResponse.builder()
-                    .id(task.getId())
-                    .taskText(task.getTaskText())
-                    .taskName(task.getTaskName())
-                    .deadLine(task.getDeadLine())
+            return UnionTaskResponse.builder()
+                    .data(TaskResponse.builder()
+                            .id(task.getId())
+                            .taskText(task.getTaskText())
+                            .taskName(task.getTaskName())
+                            .deadLine(task.getDeadLine())
+                            .build())
+                    .status(SimpleResponse.builder()
+                            .message("Successfully returned!")
+                            .httpStatus(HttpStatus.OK)
+                            .build())
                     .build();
         } catch (NoSuchElementException e) {
-            throw new NoSuchElementException("Task with id " + taskId + " is not found!");
+            return UnionTaskResponse.builder()
+                    .data(null)
+                    .status(SimpleResponse.builder()
+                            .message("Task with id " + taskId + " is not found!")
+                            .httpStatus(HttpStatus.NOT_FOUND)
+                            .build())
+                    .build();
         }
     }
 

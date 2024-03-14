@@ -3,14 +3,17 @@ package peaksoft.service.impls;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import peaksoft.dto.requests.InstructorRequest;
 import peaksoft.dto.responses.CountOfStudentsResponse;
 import peaksoft.dto.responses.InstructorResponse;
 import peaksoft.dto.responses.SimpleResponse;
-import peaksoft.entites.Company;
-import peaksoft.entites.Course;
-import peaksoft.entites.Instructor;
+import peaksoft.dto.responses.unions.UnionCountOfStudentsResponse;
+import peaksoft.dto.responses.unions.UnionInstructorResponse;
+import peaksoft.entities.Company;
+import peaksoft.entities.Course;
+import peaksoft.entities.Instructor;
 import peaksoft.enums.Specialization;
 import peaksoft.repositories.CompanyRepository;
 import peaksoft.repositories.CourseRepository;
@@ -25,6 +28,7 @@ public class InstructorServiceImpl implements InstructorService {
     private final InstructorRepository instructorRepository;
     private final CompanyRepository companyRepository;
     private final CourseRepository courseRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public SimpleResponse save(InstructorRequest instructorRequest) {
@@ -33,6 +37,7 @@ public class InstructorServiceImpl implements InstructorService {
                 throw new RuntimeException("Phone number does not contain +996!");
             }
             Instructor buildedInstructor = instructorRequest.build();
+            buildedInstructor.getLoginDetails().setPassword(passwordEncoder.encode(buildedInstructor.getLoginDetails().getPassword()));
             instructorRepository.save(buildedInstructor);
             return SimpleResponse.builder().httpStatus(HttpStatus.OK).message("Successfully saved!").build();
         } catch (RuntimeException e) {
@@ -41,18 +46,30 @@ public class InstructorServiceImpl implements InstructorService {
     }
 
     @Override
-    public InstructorResponse findById(Long instructorId) {
+    public UnionInstructorResponse findById(Long instructorId) {
         try {
             Instructor instructor = instructorRepository.findById(instructorId).orElseThrow(NoSuchElementException::new);
-            return InstructorResponse.builder()
-                    .firstName(instructor.getFirstName())
-                    .id(instructor.getId())
-                    .lastName(instructor.getLastName())
-                    .phoneNumber(instructor.getPhoneNumber())
-                    .specialization(instructor.getSpecialization())
+            return UnionInstructorResponse.builder()
+                    .data(InstructorResponse.builder()
+                            .firstName(instructor.getFirstName())
+                            .id(instructor.getId())
+                            .lastName(instructor.getLastName())
+                            .phoneNumber(instructor.getPhoneNumber())
+                            .specialization(instructor.getSpecialization())
+                            .build())
+                    .status(SimpleResponse.builder()
+                            .httpStatus(HttpStatus.OK)
+                            .message("Successfully returned!")
+                            .build())
                     .build();
         } catch (NoSuchElementException e) {
-            throw new NoSuchElementException("Instructor with id " + instructorId + " is not found!");
+            return UnionInstructorResponse.builder()
+                    .data(null)
+                    .status(SimpleResponse.builder()
+                            .httpStatus(HttpStatus.NOT_FOUND)
+                            .message("Instructor with id " + instructorId + " is not found!")
+                            .build())
+                    .build();
         }
     }
 
@@ -115,16 +132,22 @@ public class InstructorServiceImpl implements InstructorService {
 
 
     @Override
-    public CountOfStudentsResponse getCountOfStudentsFromThatInstructorTeach(Long instructorId) {
+    public UnionCountOfStudentsResponse getCountOfStudentsFromThatInstructorTeach(Long instructorId) {
         try {
             Instructor instructor = instructorRepository.findById(instructorId).orElseThrow(() -> new NoSuchElementException("Instructor with id " + instructorId + " is not found!"));
             int totalCount = instructor.getCourse().getGroups().stream()
                     .mapToInt(group -> group.getStudents().size())
                     .sum();
 
-            return CountOfStudentsResponse.builder().count(totalCount).build();
+            return UnionCountOfStudentsResponse.builder()
+                    .data(CountOfStudentsResponse.builder().count(totalCount).build())
+                    .status(SimpleResponse.builder().httpStatus(HttpStatus.OK).message("Successfully returned!").build())
+                    .build();
         } catch (NoSuchElementException e) {
-            throw new NoSuchElementException("Instructor with id " + instructorId + " is not found!");
+            return UnionCountOfStudentsResponse.builder()
+                    .data(null)
+                    .status(SimpleResponse.builder().httpStatus(HttpStatus.NOT_FOUND).message("Instructor with id " + instructorId + " is not found!").build())
+                    .build();
         }
     }
 

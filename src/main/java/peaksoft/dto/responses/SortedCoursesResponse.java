@@ -1,7 +1,7 @@
 package peaksoft.dto.responses;
 
 import lombok.Builder;
-import peaksoft.entites.Course;
+import peaksoft.entities.Course;
 
 import java.util.List;
 

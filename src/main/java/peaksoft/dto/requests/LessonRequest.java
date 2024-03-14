@@ -1,6 +1,6 @@
 package peaksoft.dto.requests;
 
-import peaksoft.entites.Lesson;
+import peaksoft.entities.Lesson;
 
 public record LessonRequest(
         String lessonName,

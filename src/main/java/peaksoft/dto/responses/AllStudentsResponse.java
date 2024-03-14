@@ -1,12 +1,12 @@
 package peaksoft.dto.responses;
 
 import lombok.Builder;
-import peaksoft.entites.Student;
+import peaksoft.entities.Student;
 
 import java.util.List;
 
 @Builder
-public record SortedByStudyFormatStudentsResponse(
+public record AllStudentsResponse(
         List<Student> students
 ) {
 }

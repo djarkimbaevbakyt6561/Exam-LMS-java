@@ -1,6 +1,6 @@
 package peaksoft.dto.requests;
 
-import peaksoft.entites.Course;
+import peaksoft.entities.Course;
 
 public record CourseRequest(
         String courseName,

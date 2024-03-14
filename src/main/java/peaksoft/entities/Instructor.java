@@ -1,4 +1,4 @@
-package peaksoft.entites;
+package peaksoft.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -15,7 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 @Setter
-public class Instructor {
+public class Instructor{
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "instructors_gen")
     @SequenceGenerator(name = "instructors_gen", sequenceName = "instructors_seq", allocationSize = 1)
@@ -23,7 +23,10 @@ public class Instructor {
     private String firstName;
     private String lastName;
     private String phoneNumber;
+    @Enumerated(EnumType.STRING)
     private Specialization specialization;
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE, CascadeType.MERGE})
+    private LoginDetails loginDetails;
     @ManyToOne
     @JoinTable(
             name = "instructor_course",
@@ -32,4 +35,6 @@ public class Instructor {
     private Course course;
     @ManyToMany
     private List<Company> companies;
+
+
 }

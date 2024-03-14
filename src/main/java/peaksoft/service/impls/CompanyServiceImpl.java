@@ -7,10 +7,12 @@ import org.springframework.stereotype.Service;
 import peaksoft.dto.requests.CompanyRequest;
 import peaksoft.dto.responses.CompanyResponse;
 import peaksoft.dto.responses.SimpleResponse;
-import peaksoft.entites.Company;
-import peaksoft.entites.Course;
-import peaksoft.entites.Group;
-import peaksoft.entites.Instructor;
+import peaksoft.dto.responses.unions.UnionCompanyResponse;
+import peaksoft.entities.Company;
+import peaksoft.entities.Course;
+import peaksoft.entities.Group;
+import peaksoft.entities.Instructor;
+import peaksoft.exceptions.DuplicateNameCompanyException;
 import peaksoft.repositories.*;
 import peaksoft.service.CompanyService;
 
@@ -28,36 +30,45 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override
     public SimpleResponse save(CompanyRequest companyRequest) {
-        if (!companyRequest.phoneNumber().contains("+996")) {
-            return SimpleResponse.builder().message("Phone number does not contain +996!").httpStatus(HttpStatus.BAD_REQUEST).build();
+        try {
+            if (!companyRequest.phoneNumber().contains("+996")) {
+                return SimpleResponse.builder().message("Phone number does not contain +996!").httpStatus(HttpStatus.BAD_REQUEST).build();
+            }
+            Company buildedCompany = companyRequest.build();
+            companyRepository.save(buildedCompany);
+            return SimpleResponse.builder().message("Successfully saved!").httpStatus(HttpStatus.OK).build();
+        } catch (DuplicateNameCompanyException e) {
+            return SimpleResponse.builder().message(e.getMessage()).httpStatus(HttpStatus.BAD_REQUEST).build();
         }
-        Company buildedCompany = companyRequest.build();
-        companyRepository.save(buildedCompany);
-        return SimpleResponse.builder().message("Successfully saved!").httpStatus(HttpStatus.OK).build();
+
     }
 
     @Override
-    public CompanyResponse findById(Long companyId) {
+    public UnionCompanyResponse findById(Long companyId) {
         try {
             Long countOfStudentsByCompanyId = studentRepository.getCountOfStudentsByCompanyId(companyId);
             List<Instructor> instructorsByCompanyId = instructorRepository.getInstructorsByCompanyId(companyId);
             List<Course> courses = courseRepository.getCoursesByCompanyId(companyId);
             List<Group> groups = groupRepository.getGroupsByCompanyId(companyId);
             Company company = companyRepository.findById(companyId).orElseThrow(NoSuchElementException::new);
-            return CompanyResponse
-                    .builder()
-                    .id(company.getId())
-                    .name(company.getName())
-                    .address(company.getAddress())
-                    .country(company.getCountry())
-                    .phoneNumber(company.getPhoneNumber())
-                    .coursesNamesOfCompany(courses.stream().map(Course::getCourseName).toList())
-                    .countOfStudents(countOfStudentsByCompanyId)
-                    .groupsNamesOfCompany(groups.stream().map(Group::getGroupName).toList())
-                    .instructorsNamesOfCompany(instructorsByCompanyId.stream().map(Instructor::getFirstName).toList())
+            return UnionCompanyResponse.builder()
+                    .data(
+                            CompanyResponse
+                                    .builder()
+                                    .id(company.getId())
+                                    .name(company.getName())
+                                    .address(company.getAddress())
+                                    .country(company.getCountry())
+                                    .phoneNumber(company.getPhoneNumber())
+                                    .coursesNamesOfCompany(courses.stream().map(Course::getCourseName).toList())
+                                    .countOfStudents(countOfStudentsByCompanyId)
+                                    .groupsNamesOfCompany(groups.stream().map(Group::getGroupName).toList())
+                                    .instructorsNamesOfCompany(instructorsByCompanyId.stream().map(Instructor::getFirstName).toList())
+                                    .build())
+                    .status(SimpleResponse.builder().message("Successfully returned!").httpStatus(HttpStatus.OK).build())
                     .build();
         } catch (NoSuchElementException e) {
-            throw new NoSuchElementException("Company with id " + companyId + " is not found!");
+            return UnionCompanyResponse.builder().data(null).status(SimpleResponse.builder().message("Company with id " + companyId + " is not found!").httpStatus(HttpStatus.NOT_FOUND).build()).build();
         }
     }
 

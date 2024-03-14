@@ -1,19 +1,19 @@
 package peaksoft.service;
 
 import peaksoft.dto.requests.GroupRequest;
-import peaksoft.dto.responses.CountOfStudentsResponse;
-import peaksoft.dto.responses.GroupResponse;
 import peaksoft.dto.responses.SimpleResponse;
+import peaksoft.dto.responses.unions.UnionCountOfStudentsResponse;
+import peaksoft.dto.responses.unions.UnionGroupResponse;
 
 public interface GroupService {
     SimpleResponse save(GroupRequest groupRequest);
 
-    GroupResponse findById(Long groupId);
+    UnionGroupResponse findById(Long groupId);
 
     SimpleResponse update(Long groupId, GroupRequest groupRequest);
 
     SimpleResponse deleteById(Long groupId);
 
     SimpleResponse assignGroupToCourse(Long groupId, Long courseId);
-    CountOfStudentsResponse getCountOfStudentsFromGroup(Long groupId);
+    UnionCountOfStudentsResponse getCountOfStudentsFromGroup(Long groupId);
 }

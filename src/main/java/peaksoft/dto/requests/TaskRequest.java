@@ -1,6 +1,6 @@
 package peaksoft.dto.requests;
 
-import peaksoft.entites.Task;
+import peaksoft.entities.Task;
 
 import java.time.LocalDate;
 

@@ -1,7 +1,7 @@
 package peaksoft.dto.requests;
 
 
-import peaksoft.entites.Group;
+import peaksoft.entities.Group;
 
 public record GroupRequest(
         String groupName,

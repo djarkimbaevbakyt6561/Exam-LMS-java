@@ -9,8 +9,11 @@ import peaksoft.dto.requests.UpdateCourseRequest;
 import peaksoft.dto.responses.SortedCoursesResponse;
 import peaksoft.dto.responses.CourseResponse;
 import peaksoft.dto.responses.SimpleResponse;
-import peaksoft.entites.Company;
-import peaksoft.entites.Course;
+import peaksoft.dto.responses.unions.UnionCourseResponse;
+import peaksoft.dto.responses.unions.UnionSortedCoursesResponse;
+import peaksoft.entities.Company;
+import peaksoft.entities.Course;
+import peaksoft.entities.Group;
 import peaksoft.repositories.CompanyRepository;
 import peaksoft.repositories.CourseRepository;
 import peaksoft.service.CourseService;
@@ -39,17 +42,32 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public CourseResponse findById(Long courseId) {
+    public UnionCourseResponse findById(Long courseId) {
         try {
             Course course = courseRepository.findById(courseId).orElseThrow(NoSuchElementException::new);
-            return CourseResponse
-                    .builder()
-                    .id(course.getId())
-                    .courseName(course.getCourseName())
-                    .description(course.getDescription())
+            return UnionCourseResponse.builder()
+                    .data(CourseResponse
+                            .builder()
+                            .id(course.getId())
+                            .courseName(course.getCourseName())
+                            .description(course.getDescription())
+                            .build())
+                    .status(SimpleResponse
+                            .builder()
+                            .httpStatus(HttpStatus.OK)
+                            .message("Successfully returned!")
+                            .build()
+                    )
                     .build();
         } catch (NoSuchElementException e) {
-            throw new NoSuchElementException("Course with id " + courseId + " is not found!");
+            return UnionCourseResponse.builder()
+                    .status(SimpleResponse
+                            .builder()
+                            .message("Course with id " + courseId + " is not found!")
+                            .httpStatus(HttpStatus.NOT_FOUND)
+                            .build())
+                    .data(null)
+                    .build();
         }
     }
 
@@ -67,9 +85,16 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
+    @Transactional
     public SimpleResponse deleteById(Long courseId) {
         try {
-            courseRepository.findById(courseId).orElseThrow(NoSuchElementException::new);
+            Course course = courseRepository.findById(courseId).orElseThrow(NoSuchElementException::new);
+            List<Group> groups = course.getGroups();
+            if (groups != null) {
+                for (Group group : groups) {
+                    group.getCourses().remove(course);
+                }
+            }
             courseRepository.deleteById(courseId);
             return SimpleResponse.builder().httpStatus(HttpStatus.OK).message("Successfully deleted!").build();
         } catch (NoSuchElementException e) {
@@ -78,8 +103,18 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public SortedCoursesResponse getAllSortedCourses() {
-        List<Course> courses = courseRepository.getSortedCoursesByDateStart();
-        return SortedCoursesResponse.builder().courses(courses).build();
+    public UnionSortedCoursesResponse getAllSortedCourses() {
+        try {
+            List<Course> courses = courseRepository.getSortedCoursesByDateStart();
+            return UnionSortedCoursesResponse.builder()
+                    .data(SortedCoursesResponse.builder().courses(courses).build())
+                    .status(SimpleResponse.builder().message("Successfully returned!").httpStatus(HttpStatus.OK).build())
+                    .build();
+        } catch (NoSuchElementException e) {
+            return UnionSortedCoursesResponse.builder()
+                    .data(null)
+                    .status(SimpleResponse.builder().httpStatus(HttpStatus.BAD_REQUEST).message(e.getMessage()).build()).build();
+        }
+
     }
 }

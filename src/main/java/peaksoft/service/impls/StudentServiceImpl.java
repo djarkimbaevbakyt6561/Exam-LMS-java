@@ -7,10 +7,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import peaksoft.dto.requests.StudentRequest;
 import peaksoft.dto.responses.SimpleResponse;
-import peaksoft.dto.responses.SortedByStudyFormatStudentsResponse;
+import peaksoft.dto.responses.AllStudentsResponse;
 import peaksoft.dto.responses.StudentResponse;
-import peaksoft.entites.Group;
-import peaksoft.entites.Student;
+import peaksoft.dto.responses.unions.UnionAllStudentsResponse;
+import peaksoft.dto.responses.unions.UnionStudentResponse;
+import peaksoft.entities.Group;
+import peaksoft.entities.Student;
 import peaksoft.enums.StudyFormat;
 import peaksoft.repositories.GroupRepository;
 import peaksoft.repositories.StudentRepository;
@@ -40,18 +42,30 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public StudentResponse findById(Long studentId) {
+    public UnionStudentResponse findById(Long studentId) {
         try {
             Student student = studentRepository.findById(studentId).orElseThrow(NoSuchElementException::new);
-            return StudentResponse.builder()
-                    .firstName(student.getFirstName())
-                    .lastName(student.getLastName())
-                    .id(student.getId())
-                    .phoneNumber(student.getPhoneNumber())
-                    .studyFormat(student.getStudyFormat())
+            return UnionStudentResponse.builder()
+                    .data(StudentResponse.builder()
+                            .firstName(student.getFirstName())
+                            .lastName(student.getLastName())
+                            .id(student.getId())
+                            .phoneNumber(student.getPhoneNumber())
+                            .studyFormat(student.getStudyFormat())
+                            .build())
+                    .status(SimpleResponse.builder()
+                            .message("Successfully returned")
+                            .httpStatus(HttpStatus.OK)
+                            .build())
                     .build();
         } catch (NoSuchElementException e) {
-            throw new NoSuchElementException("Student with id " + studentId + " is not found!");
+            return UnionStudentResponse.builder()
+                    .data(null)
+                    .status(SimpleResponse.builder()
+                            .message("Student with id " + studentId + " is not found!")
+                            .httpStatus(HttpStatus.OK)
+                            .build())
+                    .build();
         }
     }
 
@@ -102,14 +116,29 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public SortedByStudyFormatStudentsResponse getAllSortedByStudyFormatStudentsFromCompany(Long companyId, String studyFormat) {
+    public UnionAllStudentsResponse getAllSortedByStudyFormatStudentsFromCompany(Long companyId, String studyFormat) {
         try {
-            return SortedByStudyFormatStudentsResponse
-                    .builder()
-                    .students(studentRepository.getAllCompaniesStudentsFilteredByStudyFormat(StudyFormat.valueOf(studyFormat.toUpperCase()), companyId))
+            return UnionAllStudentsResponse.builder()
+                    .data(AllStudentsResponse
+                            .builder()
+                            .students(studentRepository.getAllCompaniesStudentsFilteredByStudyFormat(StudyFormat.valueOf(studyFormat.toUpperCase()), companyId))
+                            .build())
+                    .status(SimpleResponse.builder()
+                            .message("Successfully returned!")
+                            .httpStatus(HttpStatus.OK)
+                            .build())
                     .build();
         } catch (RuntimeException e) {
-            throw new RuntimeException("Wrong Study Format!");
+            return UnionAllStudentsResponse.builder()
+                    .data(AllStudentsResponse
+                            .builder()
+                            .students(studentRepository.getAllCompaniesStudentsFilteredByStudyFormat(StudyFormat.valueOf(studyFormat.toUpperCase()), companyId))
+                            .build())
+                    .status(SimpleResponse.builder()
+                            .message("Wrong Study Format!")
+                            .httpStatus(HttpStatus.NOT_FOUND)
+                            .build())
+                    .build();
         }
     }
 }

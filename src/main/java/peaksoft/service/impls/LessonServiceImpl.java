@@ -8,8 +8,9 @@ import peaksoft.dto.requests.LessonRequest;
 import peaksoft.dto.requests.UpdateLessonRequest;
 import peaksoft.dto.responses.LessonResponse;
 import peaksoft.dto.responses.SimpleResponse;
-import peaksoft.entites.Course;
-import peaksoft.entites.Lesson;
+import peaksoft.dto.responses.unions.UnionLessonResponse;
+import peaksoft.entities.Course;
+import peaksoft.entities.Lesson;
 import peaksoft.repositories.CourseRepository;
 import peaksoft.repositories.LessonRepository;
 import peaksoft.service.LessonService;
@@ -36,16 +37,28 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
-    public LessonResponse findById(Long lessonId) {
+    public UnionLessonResponse findById(Long lessonId) {
         try {
             Lesson lesson = lessonRepository.findById(lessonId).orElseThrow(NoSuchElementException::new);
-            return LessonResponse.builder()
-                    .id(lesson.getId())
-                    .lessonName(lesson.getLessonName())
-                    .tasks(lesson.getTasks())
+            return UnionLessonResponse.builder()
+                    .data(LessonResponse.builder()
+                            .id(lesson.getId())
+                            .lessonName(lesson.getLessonName())
+                            .tasks(lesson.getTasks())
+                            .build())
+                    .status(SimpleResponse.builder()
+                            .message("Successfully returned!")
+                            .httpStatus(HttpStatus.OK)
+                            .build())
                     .build();
         } catch (NoSuchElementException e) {
-            throw new NoSuchElementException("Lesson with id " + lessonId + " is not found!");
+            return UnionLessonResponse.builder()
+                    .data(null)
+                    .status(SimpleResponse.builder()
+                            .message("Lesson with id " + lessonId + " is not found!")
+                            .httpStatus(HttpStatus.NOT_FOUND)
+                            .build())
+                    .build();
         }
     }
 

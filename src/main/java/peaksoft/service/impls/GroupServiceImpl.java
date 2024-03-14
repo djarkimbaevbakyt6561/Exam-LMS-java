@@ -8,9 +8,11 @@ import peaksoft.dto.requests.GroupRequest;
 import peaksoft.dto.responses.CountOfStudentsResponse;
 import peaksoft.dto.responses.GroupResponse;
 import peaksoft.dto.responses.SimpleResponse;
-import peaksoft.entites.Course;
-import peaksoft.entites.Group;
-import peaksoft.entites.Student;
+import peaksoft.dto.responses.unions.UnionCountOfStudentsResponse;
+import peaksoft.dto.responses.unions.UnionGroupResponse;
+import peaksoft.entities.Course;
+import peaksoft.entities.Group;
+import peaksoft.entities.Student;
 import peaksoft.repositories.CourseRepository;
 import peaksoft.repositories.GroupRepository;
 import peaksoft.service.GroupService;
@@ -32,18 +34,32 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public GroupResponse findById(Long groupId) {
+    public UnionGroupResponse findById(Long groupId) {
         try {
             Group foundGroup = groupRepository.findById(groupId).orElseThrow(NoSuchElementException::new);
-            return GroupResponse
-                    .builder()
-                    .id(foundGroup.getId())
-                    .groupName(foundGroup.getGroupName())
-                    .imageLink(foundGroup.getImageLink())
-                    .description(foundGroup.getDescription())
+            return UnionGroupResponse.builder()
+                    .data(GroupResponse
+                            .builder()
+                            .id(foundGroup.getId())
+                            .groupName(foundGroup.getGroupName())
+                            .imageLink(foundGroup.getImageLink())
+                            .description(foundGroup.getDescription())
+                            .build())
+                    .status(SimpleResponse
+                            .builder()
+                            .httpStatus(HttpStatus.OK)
+                            .message("Successfully Returned!")
+                            .build())
                     .build();
         } catch (NoSuchElementException e) {
-            throw new NoSuchElementException("Group with id " + groupId + " is not found!");
+            return UnionGroupResponse.builder()
+                    .data(null)
+                    .status(SimpleResponse
+                            .builder()
+                            .httpStatus(HttpStatus.NOT_FOUND)
+                            .message("Group with id " + groupId + " is not found!")
+                            .build())
+                    .build();
         }
     }
 
@@ -61,9 +77,16 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    @Transactional
     public SimpleResponse deleteById(Long groupId) {
         try {
-            groupRepository.findById(groupId).orElseThrow(NoSuchElementException::new);
+            Group group = groupRepository.findById(groupId).orElseThrow(NoSuchElementException::new);
+            List<Course> courses = group.getCourses();
+            if (courses != null) {
+                for (Course course : courses) {
+                    course.getGroups().remove(group);
+                }
+            }
             groupRepository.deleteById(groupId);
             return SimpleResponse.builder().httpStatus(HttpStatus.OK).message("Successfully deleted!").build();
         } catch (NoSuchElementException e) {
@@ -87,13 +110,21 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public CountOfStudentsResponse getCountOfStudentsFromGroup(Long groupId) {
+    public UnionCountOfStudentsResponse getCountOfStudentsFromGroup(Long groupId) {
         try {
             Group group = groupRepository.findById(groupId).orElseThrow(NoSuchElementException::new);
             List<Student> students = group.getStudents();
-            return CountOfStudentsResponse.builder().count(students.size()).build();
+            return UnionCountOfStudentsResponse
+                    .builder()
+                    .data(CountOfStudentsResponse.builder().count(students.size()).build())
+                    .status(SimpleResponse.builder().httpStatus(HttpStatus.OK).message("Successfully returned!").build())
+                    .build();
         } catch (NoSuchElementException e) {
-            throw new NoSuchElementException("Group with id " + groupId + " is not found!");
+            return UnionCountOfStudentsResponse
+                    .builder()
+                    .data(null)
+                    .status(SimpleResponse.builder().httpStatus(HttpStatus.NOT_FOUND).message("Group with id " + groupId + " is not found!").build())
+                    .build();
         }
     }
 }

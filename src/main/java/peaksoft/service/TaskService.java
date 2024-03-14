@@ -3,12 +3,12 @@ package peaksoft.service;
 import peaksoft.dto.requests.TaskRequest;
 import peaksoft.dto.requests.UpdateTaskRequest;
 import peaksoft.dto.responses.SimpleResponse;
-import peaksoft.dto.responses.TaskResponse;
+import peaksoft.dto.responses.unions.UnionTaskResponse;
 
 public interface TaskService {
     SimpleResponse save(TaskRequest taskRequest);
 
-    TaskResponse findById(Long taskId);
+    UnionTaskResponse findById(Long taskId);
 
     SimpleResponse update(Long taskId, UpdateTaskRequest taskRequest);
 

@@ -1,6 +1,6 @@
 package peaksoft.dto.requests;
 
-import peaksoft.entites.Company;
+import peaksoft.entities.Company;
 
 public record CompanyRequest(
         String name,

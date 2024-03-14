@@ -1,4 +1,4 @@
-package peaksoft.entites;
+package peaksoft.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

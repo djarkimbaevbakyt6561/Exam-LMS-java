@@ -1,6 +1,8 @@
 package peaksoft.dto.requests;
 
-import peaksoft.entites.Student;
+import peaksoft.entities.LoginDetails;
+import peaksoft.entities.Student;
+import peaksoft.enums.Role;
 import peaksoft.enums.StudyFormat;
 
 public record StudentRequest(
@@ -8,6 +10,7 @@ public record StudentRequest(
         String lastName,
         String phoneNumber,
         String email,
+        String password,
         Long groupId,
         String studyFormat
 ) {
@@ -15,7 +18,7 @@ public record StudentRequest(
         Student newStudent = new Student();
         newStudent.setFirstName(this.firstName);
         newStudent.setLastName(this.lastName);
-        newStudent.setEmail(this.email);
+        newStudent.setLoginDetails(LoginDetails.builder().role(Role.STUDENT).email(this.email).password(this.password).build());
         newStudent.setPhoneNumber(this.phoneNumber);
         newStudent.setStudyFormat(StudyFormat.valueOf(this.studyFormat.toUpperCase()));
         return newStudent;
